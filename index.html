@@ -1,1 +1,141 @@
+<!-- ... existing code ... -->
+    <!-- Font Awesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PWA Mobile Web App Support Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SIMSARPRAS">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/0284c7/ffffff?text=SIMSARPRAS">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- ... existing code ... -->
+        <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between flex-shrink-0 shadow-sm z-10">
+            <div class="flex items-center space-x-3">
+                <button onclick="window.toggleMobileSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-1.5 rounded-lg border border-slate-200">
+                    <i class="fa-solid fa-bars text-base"></i>
+                </button>
+                <h2 id="pageTitle" class="text-base font-extrabold text-slate-800">Dashboard Utama</h2>
+                <!-- Online Status Indicator Badge -->
+                <div id="syncStatusBadge" class="hidden sm:flex items-center space-x-1.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>🟢 Real-Time Online Sync</span>
+                </div>
+            </div>
 
+            <div class="flex items-center space-x-2">
+                <button onclick="window.openModal('modalInstallPWA')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center space-x-2 shadow-sm">
+                    <i class="fa-solid fa-mobile-screen-button text-sm text-indigo-600"></i>
+                    <span class="hidden sm:inline">INSTALL DI HP</span>
+                </button>
+                <button onclick="window.simulateQuickQRScanForLapor()" class="bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center space-x-2 shadow-sm">
+                    <i class="fa-solid fa-qrcode"></i>
+                    <span class="hidden sm:inline">SCAN QR LAPOR</span>
+                </button>
+                <button onclick="window.toggleNotificationMenu()" class="p-2 text-slate-500 hover:text-slate-800 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors relative">
+                    <i class="fa-regular fa-bell text-sm"></i>
+                    <span class="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
+                </button>
+            </div>
+        </header>
+<!-- ... existing code ... -->
+    <!-- Modal: Install PWA Guide -->
+    <div id="modalInstallPWA" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-center">
+            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-indigo-100 shadow-sm">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-slate-800 text-base">📲 Cara Install SIMSARPRAS di HP</h3>
+                <p class="text-xs text-slate-500 mt-1">Gunakan seperti aplikasi Android / iPhone tanpa perlu Play Store!</p>
+            </div>
+
+            <div class="text-left bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3 text-xs">
+                <div class="flex items-start space-x-3">
+                    <span class="bg-indigo-600 text-white font-bold w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">1</span>
+                    <div>
+                        <strong class="text-slate-800 block">Untuk Android (Google Chrome):</strong>
+                        <p class="text-slate-500">Ketik titik tiga <strong>(⋮)</strong> di kanan atas browser, lalu pilih <span class="font-bold text-indigo-700">"Tambahkan ke Layar Utama" / "Install Aplikasi"</span>.</p>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 pt-2 flex items-start space-x-3">
+                    <span class="bg-indigo-600 text-white font-bold w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">2</span>
+                    <div>
+                        <strong class="text-slate-800 block">Untuk iPhone (Safari):</strong>
+                        <p class="text-slate-500">Ketuk ikon Bagikan <strong>(Share)</strong> di bagian bawah Safari, lalu pilih <span class="font-bold text-indigo-700">"Add to Home Screen"</span>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="window.triggerNativePWAInstall()" id="btnNativeInstall" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition-colors flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-download"></i>
+                <span>INSTALL APLIKASI SEKARANG</span>
+            </button>
+            <button onclick="window.closeModal('modalInstallPWA')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // PWA Installation Handler
+        let deferredPWAPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPWAPrompt = e;
+            const btn = document.getElementById('btnNativeInstall');
+            if (btn) btn.classList.remove('hidden');
+        });
+
+        window.triggerNativePWAInstall = function() {
+            if (deferredPWAPrompt) {
+                deferredPWAPrompt.prompt();
+                deferredPWAPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        window.showToast('🎉 Aplikasi SIMSARPRAS berhasil di-install ke HP Anda!', 'success');
+                    }
+                    deferredPWAPrompt = null;
+                    window.closeModal('modalInstallPWA');
+                });
+            } else {
+                window.showToast('Petunjuk install ditampilkan di layar. Ikuti langkah di atas sesuai jenis HP Anda.', 'info');
+            }
+        };
+
+        // Auto-generate Dynamic Web App Manifest Blob
+        (function injectManifest() {
+            const manifest = {
+                "name": "SIMSARPRAS STEMGA",
+                "short_name": "SIMSARPRAS",
+                "start_url": ".",
+                "display": "standalone",
+                "background_color": "#0f172a",
+                "theme_color": "#0f172a",
+                "icons": [
+                    {
+                        "src": "https://placehold.co/192x192/0284c7/ffffff?text=SIMSARPRAS",
+                        "sizes": "192x192",
+                        "type": "image/png"
+                    },
+                    {
+                        "src": "https://placehold.co/512x512/0284c7/ffffff?text=SIMSARPRAS",
+                        "sizes": "512x512",
+                        "type": "image/png"
+                    }
+                ]
+            };
+            const stringManifest = JSON.stringify(manifest);
+            const blob = new Blob([stringManifest], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(blob);
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = manifestURL;
+            document.getElementsByTagName('head')[0].appendChild(link);
+        })();
+    </script>
+</body>
+</html>
