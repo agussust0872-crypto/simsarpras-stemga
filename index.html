@@ -1,112 +1,857 @@
-<!-- ... existing code ... -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMSARPRAS STEMGA - Sistem Manajemen Sarana Prasarana Sekolah</title>
+
+    <!-- Fallback Standard CSS Guard to prevent leaks -->
+    <style>
+        .hidden { display: none !important; }
+        [style*="display: none"] { display: none !important; }
+        *, ::before, ::after { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background-color: #f8fafc; color: #0f172a; margin: 0; padding: 0; }
+        .modal-backdrop { position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 50; display: flex; items-center: center; justify-content: center; padding: 1rem; }
+    </style>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <!-- Font Awesome Icons CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- PWA Mobile Web App Support Meta Tags -->
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Mobile Web App PWA Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SIMSARPRAS">
     <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="https://placehold.co/192x192/0284c7/ffffff?text=SIMSARPRAS">
-    
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- ... existing code ... -->
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/0284c7/ffffff?text=STEMGA">
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col space-y-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Modal: Admin PIN Login -->
+    <div id="modalAdminLogin" class="modal-backdrop hidden" style="display: none;">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-200">
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-xl shadow-inner">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h3 class="text-lg font-extrabold text-slate-800">Login Admin Sarpras</h3>
+                <p class="text-xs text-slate-500">Masukkan PIN Admin untuk mengakses menu pengelolaan inventaris & verifikasi.</p>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">PIN Admin (Default: 1234)</label>
+                <div class="relative">
+                    <input type="password" id="inputAdminPIN" maxlength="8" placeholder="••••" class="w-full text-center text-2xl font-mono tracking-widest px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+            </div>
+            <div class="flex space-x-2 pt-2">
+                <button onclick="window.closeModal('modalAdminLogin')" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors">
+                    Batal
+                </button>
+                <button onclick="window.verifyAdminPIN()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition-colors flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-key"></i>
+                    <span>Masuk Admin</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Install PWA Guide -->
+    <div id="modalInstallPWA" class="modal-backdrop hidden" style="display: none;">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-center border border-slate-200">
+            <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center mx-auto text-xl shadow-inner">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-slate-800 text-base">📲 Install SIMSARPRAS di HP</h3>
+                <p class="text-xs text-slate-500 mt-1">Jalankan seperti aplikasi Android / iOS tanpa Play Store!</p>
+            </div>
+
+            <div class="text-left bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5 text-xs">
+                <div class="flex items-start space-x-2.5">
+                    <span class="bg-sky-600 text-white font-bold w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">1</span>
+                    <div>
+                        <strong class="text-slate-800 block">Android (Google Chrome):</strong>
+                        <p class="text-slate-500">Klik titik tiga <strong>(⋮)</strong> kanan atas ➔ pilih <span class="font-bold text-sky-700">"Tambahkan ke Layar Utama" / "Install Aplikasi"</span>.</p>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 pt-2 flex items-start space-x-2.5">
+                    <span class="bg-sky-600 text-white font-bold w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">2</span>
+                    <div>
+                        <strong class="text-slate-800 block">iPhone (Safari):</strong>
+                        <p class="text-slate-500">Ketuk ikon Bagikan <strong>(Share)</strong> di bawah ➔ pilih <span class="font-bold text-sky-700">"Add to Home Screen"</span>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="window.closeModal('modalInstallPWA')" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition-colors">
+                Tutup Petunjuk
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: QR Code Scanner Simulation -->
+    <div id="modalQRScan" class="modal-backdrop hidden" style="display: none;">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-center border border-slate-200">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-800 text-base">Scan QR Code Barang / Ruangan</h3>
+                <p class="text-xs text-slate-500 mt-1">Arahkan kamera HP ke Stiker QR Code Inventaris</p>
+            </div>
+            <div class="bg-slate-900 rounded-xl p-8 flex flex-col items-center justify-center text-white space-y-3 relative overflow-hidden border border-slate-800">
+                <div class="w-32 h-32 border-2 border-dashed border-emerald-400 rounded-lg flex items-center justify-center relative">
+                    <div class="w-full h-0.5 bg-emerald-400 absolute animate-pulse"></div>
+                    <i class="fa-solid fa-barcode text-4xl text-emerald-400/50"></i>
+                </div>
+                <span class="text-[11px] text-slate-400 font-mono">Simulasi Pembaca QR...</span>
+            </div>
+            <div class="space-y-2">
+                <button onclick="window.simulateScanResult('BRG-2026-LAB01-05')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-sm">
+                    Simulasi: Laptop PC Lab Multimedia
+                </button>
+                <button onclick="window.closeModal('modalQRScan')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebarNav" class="bg-slate-900 text-slate-300 w-full md:w-64 flex-shrink-0 flex flex-col border-r border-slate-800 shadow-xl z-20 transition-all duration-300">
+        <!-- Logo & Header -->
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-sky-600 flex items-center justify-center text-white font-black text-lg shadow-md tracking-wider">
+                    STEM
+                </div>
+                <div>
+                    <h1 class="text-sm font-black text-white tracking-wide uppercase">SIMSARPRAS</h1>
+                    <p class="text-[10px] text-sky-400 font-bold uppercase tracking-wider">SMK STEMGA STEMBA</p>
+                </div>
+            </div>
+            <button onclick="window.toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Role Badge Display -->
+        <div class="px-4 py-3 bg-slate-950/60 border-b border-slate-800/80 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span id="roleIndicatorDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                <span id="roleIndicatorText" class="text-xs font-bold text-slate-200">Mode: Public (Pelapor)</span>
+            </div>
+            <button id="btnSidebarAuthToggle" onclick="window.handleAuthToggle()" class="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-950/80 hover:bg-indigo-900 px-2.5 py-1 rounded-lg border border-indigo-800 transition-colors">
+                <i class="fa-solid fa-key mr-1"></i> Admin
+            </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 overflow-y-auto p-3 space-y-1.5 text-xs font-medium">
+            <a href="#" onclick="window.switchView('viewLaporKerusakan')" id="nav-viewLaporKerusakan" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-xl text-white bg-sky-600 font-bold shadow-md">
+                <i class="fa-solid fa-triangle-exclamation w-5 text-center text-sky-200"></i>
+                <span>Form Lapor Kerusakan</span>
+            </a>
+
+            <!-- Admin Protected Links (Hidden for Public by default) -->
+            <div id="adminProtectedNavGroup" class="space-y-1 pt-2 border-t border-slate-800/80 hidden">
+                <div class="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Menu Kelola Admin</div>
+                
+                <a href="#" onclick="window.switchView('viewDashboard')" id="nav-viewDashboard" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">
+                    <i class="fa-solid fa-chart-pie w-5 text-center text-slate-400"></i>
+                    <span>Dashboard Utama</span>
+                </a>
+                
+                <a href="#" onclick="window.switchView('viewVerifikasiLaporan')" id="nav-viewVerifikasiLaporan" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">
+                    <i class="fa-solid fa-clipboard-check w-5 text-center text-slate-400"></i>
+                    <span>Verifikasi Laporan</span>
+                </a>
+
+                <a href="#" onclick="window.switchView('viewWorkOrder')" id="nav-viewWorkOrder" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">
+                    <i class="fa-solid fa-wrench w-5 text-center text-slate-400"></i>
+                    <span>Work Order (Teknisi)</span>
+                </a>
+
+                <a href="#" onclick="window.switchView('viewInventarisBarang')" id="nav-viewInventarisBarang" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">
+                    <i class="fa-solid fa-boxes-stacked w-5 text-center text-slate-400"></i>
+                    <span>Inventaris Barang</span>
+                </a>
+
+                <a href="#" onclick="window.switchView('viewInventarisRuangan')" id="nav-viewInventarisRuangan" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">
+                    <i class="fa-solid fa-door-open w-5 text-center text-slate-400"></i>
+                    <span>Data Ruangan</span>
+                </a>
+
+                <a href="#" onclick="window.switchView('viewInventarisTanah')" id="nav-viewInventarisTanah" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">
+                    <i class="fa-solid fa-map-location-dot w-5 text-center text-slate-400"></i>
+                    <span>Tanah & Bangunan</span>
+                </a>
+
+                <a href="#" onclick="window.switchView('viewLaporan')" id="nav-viewLaporan" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">
+                    <i class="fa-solid fa-print w-5 text-center text-slate-400"></i>
+                    <span>Cetak Laporan</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Footer Note -->
+        <div class="p-3 border-t border-slate-800 text-[10px] text-slate-500 text-center">
+            SIMSARPRAS v3.0 &bull; STEMGA Online
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 min-h-screen">
+        <!-- Top Header -->
         <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between flex-shrink-0 shadow-sm z-10">
             <div class="flex items-center space-x-3">
                 <button onclick="window.toggleMobileSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-1.5 rounded-lg border border-slate-200">
                     <i class="fa-solid fa-bars text-base"></i>
                 </button>
-                <h2 id="pageTitle" class="text-base font-extrabold text-slate-800">Dashboard Utama</h2>
-                <!-- Online Status Indicator Badge -->
-                <div id="syncStatusBadge" class="hidden sm:flex items-center space-x-1.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-200">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>🟢 Real-Time Online Sync</span>
-                </div>
+                <h2 id="pageTitle" class="text-sm md:text-base font-black text-slate-800">Form Lapor Kerusakan Barang</h2>
             </div>
 
             <div class="flex items-center space-x-2">
-                <button onclick="window.openModal('modalInstallPWA')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center space-x-2 shadow-sm">
-                    <i class="fa-solid fa-mobile-screen-button text-sm text-indigo-600"></i>
+                <button onclick="window.openModal('modalInstallPWA')" class="bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-mobile-screen-button text-sky-600"></i>
                     <span class="hidden sm:inline">INSTALL DI HP</span>
                 </button>
-                <button onclick="window.simulateQuickQRScanForLapor()" class="bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center space-x-2 shadow-sm">
+                <button onclick="window.openModal('modalQRScan')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-sm">
                     <i class="fa-solid fa-qrcode"></i>
-                    <span class="hidden sm:inline">SCAN QR LAPOR</span>
+                    <span class="hidden sm:inline">SCAN QR</span>
                 </button>
-                <button onclick="window.toggleNotificationMenu()" class="p-2 text-slate-500 hover:text-slate-800 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors relative">
-                    <i class="fa-regular fa-bell text-sm"></i>
-                    <span class="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
+                <button id="btnHeaderAuthToggle" onclick="window.handleAuthToggle()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-key"></i>
+                    <span id="btnHeaderAuthText">LOGIN ADMIN</span>
                 </button>
             </div>
         </header>
-<!-- ... existing code ... -->
-    <!-- Modal: Install PWA Guide -->
-    <div id="modalInstallPWA" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-center">
-            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-indigo-100 shadow-sm">
-                <i class="fa-solid fa-mobile-screen-button"></i>
-            </div>
-            <div>
-                <h3 class="font-extrabold text-slate-800 text-base">📲 Cara Install SIMSARPRAS di HP</h3>
-                <p class="text-xs text-slate-500 mt-1">Gunakan seperti aplikasi Android / iPhone tanpa perlu Play Store!</p>
-            </div>
 
-            <div class="text-left bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3 text-xs">
-                <div class="flex items-start space-x-3">
-                    <span class="bg-indigo-600 text-white font-bold w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">1</span>
-                    <div>
-                        <strong class="text-slate-800 block">Untuk Android (Google Chrome):</strong>
-                        <p class="text-slate-500">Ketik titik tiga <strong>(⋮)</strong> di kanan atas browser, lalu pilih <span class="font-bold text-indigo-700">"Tambahkan ke Layar Utama" / "Install Aplikasi"</span>.</p>
+        <!-- Dynamic Main Content Pages -->
+        <main class="flex-1 p-4 md:p-6 overflow-y-auto space-y-6">
+
+            <!-- VIEW 1: Form Lapor Kerusakan (Public Access Default) -->
+            <section id="viewLaporKerusakan" class="content-view space-y-6">
+                <div class="bg-gradient-to-r from-sky-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                    <div class="relative z-10 max-w-xl space-y-2">
+                        <span class="bg-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-white/20">Layanan Mandiri Guru & Staff</span>
+                        <h3 class="text-xl md:text-2xl font-black">Pelaporan Kerusakan Sarpras</h3>
+                        <p class="text-xs text-sky-100 leading-relaxed">Temukan barang rusak di kelas atau lab? Laporkan langsung di sini agar tim Sarpras & Teknisi dapat segera memverifikasi dan memperbaikinya.</p>
                     </div>
                 </div>
 
-                <div class="border-t border-slate-200 pt-2 flex items-start space-x-3">
-                    <span class="bg-indigo-600 text-white font-bold w-5 h-5 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">2</span>
-                    <div>
-                        <strong class="text-slate-800 block">Untuk iPhone (Safari):</strong>
-                        <p class="text-slate-500">Ketuk ikon Bagikan <strong>(Share)</strong> di bagian bawah Safari, lalu pilih <span class="font-bold text-indigo-700">"Add to Home Screen"</span>.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Form Submit -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+                        <h4 class="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3 flex items-center space-x-2">
+                            <i class="fa-solid fa-pen-to-square text-sky-600"></i>
+                            <span>Isi Form Laporan Kerusakan</span>
+                        </h4>
+
+                        <form id="formPublicLapor" onsubmit="window.submitLaporanPublic(event)" class="space-y-4 text-xs">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Nama Pelapor (Guru / Staf) <span class="text-rose-500">*</span></label>
+                                    <input type="text" id="laporNama" required placeholder="Contoh: Budi Santoso, S.Pd" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Jabatan / Unit Kerja <span class="text-rose-500">*</span></label>
+                                    <input type="text" id="laporJabatan" required placeholder="Guru / Ka. Lab / Staf TU" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Pilih Lokasi / Ruangan <span class="text-rose-500">*</span></label>
+                                    <select id="laporRuangan" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                        <option value="">-- Pilih Ruangan --</option>
+                                        <option value="Lab Komputer 1 (TKJ)">Lab Komputer 1 (TKJ)</option>
+                                        <option value="Lab Multimedia 2">Lab Multimedia 2</option>
+                                        <option value="Ruang Guru Utama">Ruang Guru Utama</option>
+                                        <option value="Kelas XII RPL 1">Kelas XII RPL 1</option>
+                                        <option value="Bengkel Otomotif">Bengkel Otomotif</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Kode / Nama Barang <span class="text-rose-500">*</span></label>
+                                    <div class="flex space-x-2">
+                                        <input type="text" id="laporBarang" required placeholder="Contoh: LCD Projector Epson" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                        <button type="button" onclick="window.openModal('modalQRScan')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-3 py-2 rounded-xl font-bold flex items-center justify-center">
+                                            <i class="fa-solid fa-qrcode"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">Tingkat Urgensi Kerusakan</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="border border-slate-200 rounded-xl p-2.5 text-center cursor-pointer hover:bg-slate-50 flex flex-col items-center">
+                                        <input type="radio" name="laporUrgensi" value="Rendah" checked class="text-sky-600 focus:ring-sky-500">
+                                        <span class="font-bold text-slate-700 mt-1">Rendah</span>
+                                        <span class="text-[10px] text-slate-400">Masih bisa pakai</span>
+                                    </label>
+                                    <label class="border border-slate-200 rounded-xl p-2.5 text-center cursor-pointer hover:bg-slate-50 flex flex-col items-center">
+                                        <input type="radio" name="laporUrgensi" value="Sedang" class="text-amber-600 focus:ring-amber-500">
+                                        <span class="font-bold text-amber-700 mt-1">Sedang</span>
+                                        <span class="text-[10px] text-slate-400">Mengganggu</span>
+                                    </label>
+                                    <label class="border border-slate-200 rounded-xl p-2.5 text-center cursor-pointer hover:bg-slate-50 flex flex-col items-center">
+                                        <input type="radio" name="laporUrgensi" value="Tinggi" class="text-rose-600 focus:ring-rose-500">
+                                        <span class="font-bold text-rose-700 mt-1">Darurat</span>
+                                        <span class="text-[10px] text-slate-400">Macet Total</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">Rincian Deskripsi Kerusakan <span class="text-rose-500">*</span></label>
+                                <textarea id="laporDeskripsi" rows="3" required placeholder="Jelaskan detail kendala (contoh: Lampu LCD berkedip merah dan tidak mau memancarkan gambar)." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
+                            </div>
+
+                            <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-extrabold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 text-sm">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>KIRIM LAPORAN SEKARANG</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Recent Reports Status List -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+                        <h4 class="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3 flex items-center justify-between">
+                            <span>Riwayat Laporan Masuk</span>
+                            <span class="bg-sky-100 text-sky-700 text-[10px] font-bold px-2 py-0.5 rounded-full" id="publicReportCountBadge">0 Laporan</span>
+                        </h4>
+
+                        <div id="publicReportList" class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                            <!-- Dynamic Content Inserted by JS -->
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <button onclick="window.triggerNativePWAInstall()" id="btnNativeInstall" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition-colors flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-download"></i>
-                <span>INSTALL APLIKASI SEKARANG</span>
-            </button>
-            <button onclick="window.closeModal('modalInstallPWA')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">
-                Tutup
-            </button>
-        </div>
+            <!-- VIEW 2: Dashboard Utama (Admin Only) -->
+            <section id="viewDashboard" class="content-view space-y-6 hidden" style="display:none;">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-500 font-bold block">Total Inventaris Barang</span>
+                            <span class="text-2xl font-black text-slate-800" id="statTotalBarang">1,248</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-500 font-bold block">Laporan Perlu Verifikasi</span>
+                            <span class="text-2xl font-black text-amber-600" id="statPendingReport">3</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-500 font-bold block">Proses Work Order</span>
+                            <span class="text-2xl font-black text-indigo-600" id="statWorkOrder">2</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-check-double"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-500 font-bold block">Selesai Diperbaiki</span>
+                            <span class="text-2xl font-black text-emerald-600" id="statCompleted">18</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <h4 class="font-extrabold text-slate-800 text-sm">Kondisi Kelayakan Barang Inventaris</h4>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chartKondisiBarang"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <h4 class="font-extrabold text-slate-800 text-sm">Aktivitas Laporan Terbaru</h4>
+                        <div id="adminRecentActivityList" class="space-y-3 text-xs">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 3: Verifikasi Laporan (Admin Only) -->
+            <section id="viewVerifikasiLaporan" class="content-view space-y-6 hidden" style="display:none;">
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <h3 class="text-base font-extrabold text-slate-800">Verifikasi & Persetujuan Laporan Masuk</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold">
+                                <tr>
+                                    <th class="p-3">Kode Laporan</th>
+                                    <th class="p-3">Pelapor</th>
+                                    <th class="p-3">Ruangan & Barang</th>
+                                    <th class="p-3">Urgensi</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Aksi Verifikasi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableVerifikasiBody" class="divide-y divide-slate-100">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 4: Work Order (Teknisi / Admin Only) -->
+            <section id="viewWorkOrder" class="content-view space-y-6 hidden" style="display:none;">
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <h3 class="text-base font-extrabold text-slate-800">Daftar Surat Perintah Kerja (Work Order Teknisi)</h3>
+                    <div id="workOrderCardsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Dynamic Work Order Cards -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 5: Inventaris Barang (Admin Only) -->
+            <section id="viewInventarisBarang" class="content-view space-y-6 hidden" style="display:none;">
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h3 class="text-base font-extrabold text-slate-800">Data Master Inventaris Barang</h3>
+                        <button onclick="window.showToast('Fitur Tambah Barang Master Siap Digunakan', 'info')" class="bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Tambah Barang Baru</span>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 uppercase font-bold">
+                                <tr>
+                                    <th class="p-3">Kode Barang</th>
+                                    <th class="p-3">Nama Barang</th>
+                                    <th class="p-3">Lokasi Ruangan</th>
+                                    <th class="p-3">Kondisi</th>
+                                    <th class="p-3">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBarangBody" class="divide-y divide-slate-100">
+                                <tr>
+                                    <td class="p-3 font-mono font-bold text-sky-700">BRG-2026-LAB01-05</td>
+                                    <td class="p-3 font-bold text-slate-800">Laptop PC Multimedia i7</td>
+                                    <td class="p-3 text-slate-600">Lab Komputer 1 (TKJ)</td>
+                                    <td class="p-3"><span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Baik</span></td>
+                                    <td class="p-3 font-bold">36 Unit</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-mono font-bold text-sky-700">BRG-2026-RGR-02</td>
+                                    <td class="p-3 font-bold text-slate-800">LCD Projector Epson EB-X400</td>
+                                    <td class="p-3 text-slate-600">Ruang Guru Utama</td>
+                                    <td class="p-3"><span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Rusak Berat</span></td>
+                                    <td class="p-3 font-bold">1 Unit</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 6: Data Ruangan (Admin Only) -->
+            <section id="viewInventarisRuangan" class="content-view space-y-6 hidden" style="display:none;">
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <h3 class="text-base font-extrabold text-slate-800">Data Master Ruangan Sekolah</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
+                            <span class="text-xs font-bold text-sky-700">RNG-LAB-01</span>
+                            <h4 class="font-extrabold text-slate-800 text-sm">Lab Komputer 1 (TKJ)</h4>
+                            <p class="text-xs text-slate-500">Kapasitas: 40 Unit PC &bull; Gedung B Lt. 2</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
+                            <span class="text-xs font-bold text-sky-700">RNG-GURU-01</span>
+                            <h4 class="font-extrabold text-slate-800 text-sm">Ruang Guru Utama</h4>
+                            <p class="text-xs text-slate-500">Kapasitas: 60 Meja &bull; Gedung Utama Lt. 1</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
+                            <span class="text-xs font-bold text-sky-700">RNG-OTM-01</span>
+                            <h4 class="font-extrabold text-slate-800 text-sm">Bengkel Otomotif</h4>
+                            <p class="text-xs text-slate-500">Kapasitas: 4 Bay Alat &bull; Gedung Workshop</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 7: Tanah & Bangunan (Admin Only) -->
+            <section id="viewInventarisTanah" class="content-view space-y-6 hidden" style="display:none;">
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <h3 class="text-base font-extrabold text-slate-800">Aset Tanah & Gedung Bangunan</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                            <div class="flex justify-between items-center">
+                                <strong class="text-sm font-bold text-slate-800">Lahan Kampus Utama STEMGA</strong>
+                                <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">Sertifikat Hak Pakai</span>
+                            </div>
+                            <p class="text-slate-600">Luas Tanah: 12.500 m² &bull; Luas Bangunan: 8.200 m²</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 8: Cetak Laporan (Admin Only) -->
+            <section id="viewLaporan" class="content-view space-y-6 hidden" style="display:none;">
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-extrabold text-slate-800">Cetak Laporan Rekapitulasi Sarpras</h3>
+                        <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-2">
+                            <i class="fa-solid fa-print"></i>
+                            <span>Cetak Cetak / PDF</span>
+                        </button>
+                    </div>
+                    <div class="p-6 border border-slate-200 rounded-xl bg-slate-50 text-xs space-y-3">
+                        <div class="text-center space-y-1 border-b border-slate-200 pb-4">
+                            <h2 class="text-base font-black tracking-wide text-slate-800 uppercase">LAPORAN KERUSAKAN & PERBAIKAN SARPRAS</h2>
+                            <p class="text-slate-500 font-bold">SMK STEMGA / STEMBA - PERIODE TAHUN 2026</p>
+                        </div>
+                        <p class="text-slate-600">Laporan ini memuat rekapitulasi data kerusakan barang yang dilaporkan secara mandiri oleh Guru & Staf, verifikasi Wakasek Sarpras, hingga proses perbaikan oleh tim Teknisi.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
     </div>
 
     <script>
-        // PWA Installation Handler
-        let deferredPWAPrompt = null;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPWAPrompt = e;
-            const btn = document.getElementById('btnNativeInstall');
-            if (btn) btn.classList.remove('hidden');
+        // Global Application State Store
+        window.SIM_STATE = {
+            isAdmin: false,
+            adminPIN: "1234",
+            currentView: "viewLaporKerusakan",
+            reports: [
+                {
+                    id: "LAP-2026-001",
+                    pelapor: "Drs. Eko Prasetyo",
+                    jabatan: "Guru TKJ",
+                    ruangan: "Lab Komputer 1 (TKJ)",
+                    barang: "PC Client No. 12",
+                    urgensi: "Sedang",
+                    deskripsi: "Komputer tiba-tiba mati sendiri dan mengeluarkan bunyi beeping.",
+                    status: "Verifikasi",
+                    tanggal: "2026-08-08 09:15"
+                },
+                {
+                    id: "LAP-2026-002",
+                    pelapor: "Siti Rahmawati, M.Pd",
+                    jabatan: "Guru Bahasa",
+                    ruangan: "Ruang Guru Utama",
+                    barang: "LCD Projector Epson",
+                    urgensi: "Tinggi",
+                    deskripsi: "Proyektor tidak memancarkan cahaya sama sekali.",
+                    status: "WorkOrder",
+                    tanggal: "2026-08-09 11:30"
+                }
+            ]
+        };
+
+        // Initialize App on DOM Ready
+        document.addEventListener('DOMContentLoaded', () => {
+            window.loadReportsFromStorage();
+            window.renderAllViews();
+            window.initChart();
         });
 
-        window.triggerNativePWAInstall = function() {
-            if (deferredPWAPrompt) {
-                deferredPWAPrompt.prompt();
-                deferredPWAPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        window.showToast('🎉 Aplikasi SIMSARPRAS berhasil di-install ke HP Anda!', 'success');
-                    }
-                    deferredPWAPrompt = null;
-                    window.closeModal('modalInstallPWA');
-                });
-            } else {
-                window.showToast('Petunjuk install ditampilkan di layar. Ikuti langkah di atas sesuai jenis HP Anda.', 'info');
+        // View Navigation Switcher
+        window.switchView = function(viewId) {
+            // Guard: If trying to access admin views without PIN
+            const protectedViews = ['viewDashboard', 'viewVerifikasiLaporan', 'viewWorkOrder', 'viewInventarisBarang', 'viewInventarisRuangan', 'viewInventarisTanah', 'viewLaporan'];
+            if (protectedViews.includes(viewId) && !window.SIM_STATE.isAdmin) {
+                window.openModal('modalAdminLogin');
+                window.showToast('Silakan login PIN Admin terlebih dahulu!', 'warning');
+                return;
+            }
+
+            // Hide all views
+            document.querySelectorAll('.content-view').forEach(el => {
+                el.classList.add('hidden');
+                el.style.display = 'none';
+            });
+
+            // Show selected view
+            const target = document.getElementById(viewId);
+            if (target) {
+                target.classList.remove('hidden');
+                target.style.display = 'block';
+                window.SIM_STATE.currentView = viewId;
+            }
+
+            // Update Nav item active styles
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-sky-600', 'text-white', 'font-bold', 'shadow-md');
+                el.classList.add('hover:bg-slate-800', 'hover:text-white');
+            });
+
+            const activeNav = document.getElementById(`nav-${viewId}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-sky-600', 'text-white', 'font-bold', 'shadow-md');
+                activeNav.classList.remove('hover:bg-slate-800', 'hover:text-white');
+            }
+
+            // Close mobile sidebar if open
+            const sidebar = document.getElementById('sidebarNav');
+            if (sidebar && window.innerWidth < 768) {
+                sidebar.classList.add('hidden');
             }
         };
 
-        // Auto-generate Dynamic Web App Manifest Blob
+        // Authentication Toggle System (PIN 1234)
+        window.handleAuthToggle = function() {
+            if (window.SIM_STATE.isAdmin) {
+                // Logout Admin back to Public Mode
+                window.SIM_STATE.isAdmin = false;
+                window.showToast('Kembali ke Mode Laporan Public Mandiri', 'info');
+                window.updateRoleUI();
+                window.switchView('viewLaporKerusakan');
+            } else {
+                window.openModal('modalAdminLogin');
+            }
+        };
+
+        window.verifyAdminPIN = function() {
+            const pinInput = document.getElementById('inputAdminPIN');
+            if (pinInput && pinInput.value === window.SIM_STATE.adminPIN) {
+                window.SIM_STATE.isAdmin = true;
+                pinInput.value = '';
+                window.closeModal('modalAdminLogin');
+                window.showToast('🎉 Login Admin Berhasil! Akses Menu Terbuka.', 'success');
+                window.updateRoleUI();
+                window.switchView('viewDashboard');
+            } else {
+                window.showToast('❌ PIN Admin Salah! (Default: 1234)', 'error');
+            }
+        };
+
+        window.updateRoleUI = function() {
+            const protectedGroup = document.getElementById('adminProtectedNavGroup');
+            const dot = document.getElementById('roleIndicatorDot');
+            const text = document.getElementById('roleIndicatorText');
+            const btnSidebar = document.getElementById('btnSidebarAuthToggle');
+            const btnHeaderText = document.getElementById('btnHeaderAuthText');
+
+            if (window.SIM_STATE.isAdmin) {
+                if (protectedGroup) protectedGroup.classList.remove('hidden');
+                if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
+                if (text) text.innerText = 'Mode: Admin (Akses Penuh)';
+                if (btnSidebar) btnSidebar.innerHTML = '<i class="fa-solid fa-lock mr-1"></i> Kunci';
+                if (btnHeaderText) btnHeaderText.innerText = 'KUNCI ADMIN';
+            } else {
+                if (protectedGroup) protectedGroup.classList.add('hidden');
+                if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse';
+                if (text) text.innerText = 'Mode: Public (Pelapor)';
+                if (btnSidebar) btnSidebar.innerHTML = '<i class="fa-solid fa-key mr-1"></i> Admin';
+                if (btnHeaderText) btnHeaderText.innerText = 'LOGIN ADMIN';
+            }
+        };
+
+        // Form Submit Public Laporan
+        window.submitLaporanPublic = function(e) {
+            e.preventDefault();
+            const nama = document.getElementById('laporNama').value;
+            const jabatan = document.getElementById('laporJabatan').value;
+            const ruangan = document.getElementById('laporRuangan').value;
+            const barang = document.getElementById('laporBarang').value;
+            const deskripsi = document.getElementById('laporDeskripsi').value;
+            
+            const urgensiEl = document.querySelector('input[name="laporUrgensi"]:checked');
+            const urgensi = urgensiEl ? urgensiEl.value : 'Rendah';
+
+            const newReport = {
+                id: `LAP-2026-00${window.SIM_STATE.reports.length + 1}`,
+                pelapor: nama,
+                jabatan: jabatan,
+                ruangan: ruangan,
+                barang: barang,
+                urgensi: urgensi,
+                deskripsi: deskripsi,
+                status: "Verifikasi",
+                tanggal: new Date().toLocaleString('id-ID')
+            };
+
+            window.SIM_STATE.reports.unshift(newReport);
+            window.saveReportsToStorage();
+            window.renderAllViews();
+
+            document.getElementById('formPublicLapor').reset();
+            window.showToast('✅ Laporan Kerusakan Berhasil Dikirim ke Sarpras!', 'success');
+        };
+
+        // LocalStorage Helpers
+        window.saveReportsToStorage = function() {
+            try {
+                localStorage.setItem('SIMSARPRAS_REPORTS', JSON.stringify(window.SIM_STATE.reports));
+            } catch(e) {}
+        };
+
+        window.loadReportsFromStorage = function() {
+            try {
+                const data = localStorage.getItem('SIMSARPRAS_REPORTS');
+                if (data) window.SIM_STATE.reports = JSON.parse(data);
+            } catch(e) {}
+        };
+
+        // Render UI Data Lists
+        window.renderAllViews = function() {
+            // Render Public Reports List
+            const publicList = document.getElementById('publicReportList');
+            const badge = document.getElementById('publicReportCountBadge');
+            
+            if (badge) badge.innerText = `${window.SIM_STATE.reports.length} Laporan`;
+
+            if (publicList) {
+                publicList.innerHTML = window.SIM_STATE.reports.map(r => `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5 text-xs">
+                        <div class="flex justify-between items-start">
+                            <span class="font-mono font-bold text-sky-700">${r.id}</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                r.status === 'Selesai' ? 'bg-emerald-100 text-emerald-800' :
+                                r.status === 'WorkOrder' ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'
+                            }">${r.status}</span>
+                        </div>
+                        <h5 class="font-extrabold text-slate-800">${r.barang} (${r.ruangan})</h5>
+                        <p class="text-slate-500 text-[11px]">${r.deskripsi}</p>
+                        <div class="flex justify-between items-center pt-1 text-[10px] text-slate-400">
+                            <span>Oleh: ${r.pelapor}</span>
+                            <span>${r.tanggal}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Table Verifikasi
+            const tableVerif = document.getElementById('tableVerifikasiBody');
+            if (tableVerif) {
+                tableVerif.innerHTML = window.SIM_STATE.reports.map(r => `
+                    <tr>
+                        <td class="p-3 font-mono font-bold text-sky-700">${r.id}</td>
+                        <td class="p-3">
+                            <div class="font-bold text-slate-800">${r.pelapor}</div>
+                            <div class="text-[10px] text-slate-500">${r.jabatan}</div>
+                        </td>
+                        <td class="p-3">
+                            <div class="font-bold text-slate-800">${r.barang}</div>
+                            <div class="text-[10px] text-slate-500">${r.ruangan}</div>
+                        </td>
+                        <td class="p-3 font-bold ${r.urgensi==='Tinggi'?'text-rose-600':'text-slate-700'}">${r.urgensi}</td>
+                        <td class="p-3"><span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${r.status}</span></td>
+                        <td class="p-3 text-right">
+                            <button onclick="window.showToast('Work Order Terbit ke Teknisi!', 'success')" class="bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">Terbitkan WO</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        };
+
+        // Chart Initialization
+        window.initChart = function() {
+            const ctx = document.getElementById('chartKondisiBarang');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Baik (85%)', 'Rusak Ringan (10%)', 'Rusak Berat (5%)'],
+                        datasets: [{
+                            data: [85, 10, 5],
+                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        };
+
+        // Utility Helpers: Modal & Toast
+        window.openModal = function(id) {
+            const m = document.getElementById(id);
+            if (m) {
+                m.classList.remove('hidden');
+                m.style.display = 'flex';
+            }
+        };
+
+        window.closeModal = function(id) {
+            const m = document.getElementById(id);
+            if (m) {
+                m.classList.add('hidden');
+                m.style.display = 'none';
+            }
+        };
+
+        window.toggleMobileSidebar = function() {
+            const sb = document.getElementById('sidebarNav');
+            if (sb) sb.classList.toggle('hidden');
+        };
+
+        window.showToast = function(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const bg = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : type === 'warning' ? 'bg-amber-600' : 'bg-slate-800';
+            const toast = document.createElement('div');
+            toast.className = `${bg} text-white text-xs font-bold px-4 py-3 rounded-xl shadow-xl flex items-center justify-between transition-all transform duration-300 pointer-events-auto`;
+            toast.innerHTML = `<span>${msg}</span><button onclick="this.parentElement.remove()" class="ml-3"><i class="fa-solid fa-xmark"></i></button>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        };
+
+        window.simulateScanResult = function(code) {
+            document.getElementById('laporBarang').value = code;
+            window.closeModal('modalQRScan');
+            window.showToast(`Kode QR Terbaca: ${code}`, 'success');
+        };
+
+        // Dynamic Manifest Generator for Mobile Installation PWA
         (function injectManifest() {
             const manifest = {
                 "name": "SIMSARPRAS STEMGA",
@@ -116,26 +861,25 @@
                 "background_color": "#0f172a",
                 "theme_color": "#0f172a",
                 "icons": [
-                    {
-                        "src": "https://placehold.co/192x192/0284c7/ffffff?text=SIMSARPRAS",
-                        "sizes": "192x192",
-                        "type": "image/png"
-                    },
-                    {
-                        "src": "https://placehold.co/512x512/0284c7/ffffff?text=SIMSARPRAS",
-                        "sizes": "512x512",
-                        "type": "image/png"
-                    }
+                    { "src": "https://placehold.co/192x192/0284c7/ffffff?text=SIMSARPRAS", "sizes": "192x192", "type": "image/png" },
+                    { "src": "https://placehold.co/512x512/0284c7/ffffff?text=SIMSARPRAS", "sizes": "512x512", "type": "image/png" }
                 ]
             };
-            const stringManifest = JSON.stringify(manifest);
-            const blob = new Blob([stringManifest], {type: 'application/json'});
-            const manifestURL = URL.createObjectURL(blob);
+            const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
             const link = document.createElement('link');
             link.rel = 'manifest';
-            link.href = manifestURL;
+            link.href = URL.createObjectURL(blob);
             document.getElementsByTagName('head')[0].appendChild(link);
         })();
     </script>
 </body>
 </html>
+```
+
+### 🛠️ Langkah Cepat memperbarui di GitHub:
+1. Klik tombol **Copy** atau **Download** file `index.html` dari panel editor sebelah kanan.
+2. Di GitHub Bos, buka repositori `simsarpras-stemga`.
+3. Klik **Add file** ➔ **Upload files**, lalu upload file `index.html` yang baru ini.
+4. Klik tombol hijau **Commit changes**.
+
+Tampilan dijamin langsung rapi 100% tanpa tulisan yang berantakan!
